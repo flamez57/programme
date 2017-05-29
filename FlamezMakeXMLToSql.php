@@ -79,9 +79,11 @@ class FlamezMakeXMLToSql{
 		$sql = "select conversion_id from {$this->db_name}";
 
 		$result =  mysql_query($sql);
-		$row = mysql_fetch_assoc($result);
+		while($row = mysql_fetch_assoc($result)){
+		    $rows[] = $row['conversion_id'];
+		}
 		mysql_free_result($result);
-		return $row;
+		return $rows;;
     }
 }
 		
