@@ -70,20 +70,18 @@ class FlamezMakeXMLToSql{
     }
     private function toMysql()
     {
-		$conn = mysql_connect($this->host,$this->username,$this->password);
-		if(!$conn){
-			return '数据库连接失败';
-		}
-		mysql_select_db($this->db);
-		mysql_set_charset('utf8');
-		$sql = "select conversion_id from {$this->db_name}";
-
-		$result =  mysql_query($sql);
-		while($row = mysql_fetch_assoc($result)){
-		    $rows[] = $row['conversion_id'];
-		}
-		mysql_free_result($result);
-		return $rows;;
+	$dsn="mysql:dbname={$this->db};host={$this->host}";
+	try{
+	    $pdo=new PDO($dsn,$this->username,$this->password,array(PDO::MYSQL_ATTR_INIT_COMMAND => "set names utf8"));
+	}catch(PDOException $e){
+	    return '数据库连接失败'.$e->getMessage();
+	}
+	$sql = "select conversion_id from {$this->db_name}";
+	$res=$pdo->query($sql);
+	foreach($res as $row){
+	$rows[] = $row['conversion_id'];
+	}
+	return $rows;
     }
 }
 		
