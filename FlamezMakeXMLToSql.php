@@ -17,7 +17,7 @@ class FlamezMakeXMLToSql{
         }
         return self::$_instance;
     }
-    
+    //拼接sql语句
     public function getSql($url,$host,$username,$password,$db,$db_name)
     {
     	$this->host = $host;
@@ -44,6 +44,7 @@ class FlamezMakeXMLToSql{
 		$data['sql'] = rtrim($sql,',');
 		return $data;
     }
+	//get方式获取xml文件内容
     private function getXml()
     {
     	$ch = curl_init();
@@ -55,11 +56,13 @@ class FlamezMakeXMLToSql{
 		curl_close($ch);
 		return trim($output);
     }
+	//将xml转换成数组
     private function XmlToArray($xml)
     {
     	$xml = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NOBLANKS); 
 		return @json_decode(@json_encode($xml),1);
     }
+	//处理数组
     private function getArray()
     {
     	$chu = $this->XmlToArray($this->getXml());
@@ -68,6 +71,7 @@ class FlamezMakeXMLToSql{
     	$data['con'] = $chu['conversions']['conversion'];
     	return $data;
     }
+	//连接查询mysql库
     private function toMysql()
     {
 	$dsn="mysql:dbname={$this->db};host={$this->host}";
