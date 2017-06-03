@@ -6,6 +6,7 @@ class mysqlSync{
 	private $sourcepdo;
 	private $sourceConf; //源配置信息
 	private $selfConf;   //目标配置信息
+	private $canNotTable; //无法处理的表
 
 	public function __construct($sourceConf,$selfConf)
 	{
@@ -26,11 +27,15 @@ class mysqlSync{
 	}
 
 	// 查看表索引
-	public function getIndex($conf)
+	public function getIndex($conf,$table_name)
 	{
-		$stmt = $this->$conf->prepare('show keys from ims_bj_qmxk_channel_list');  
+		$stmt = $this->$conf->prepare('show keys from '.$table_name);  
 		$stmt->execute();  
-		return $stmt->fetchAll(PDO::FETCH_ASSOC); 
+		$datai = $stmt->fetchAll(PDO::FETCH_ASSOC); 
+		foreach($datai as $v){
+			$data[$v['Key_name']][$v['Seq_in_index']] = $v['Column_name'];
+		}
+		return $data;
 	}
 
 	// 查看库里面所有的表
@@ -69,7 +74,7 @@ class mysqlSync{
 	public function diffTable()
 	{
 		//无法处理的表下面打印的是
-		//var_dump(array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo')));
+		$this->canNotTable = array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo'));
 		return array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo'));
 	}
 
@@ -92,16 +97,40 @@ class mysqlSync{
 	// 对比存在不一致的字段属性
 	public function diff_field_attr($source,$self)
 	{
+
 		$key = array_keys($source);
 		foreach($key as $v){
-			if(array_diff($source[$v],$self[$v])){
-				$data[] = $source;
-			}
+			if(!empty($self[$v])){
+				//防止库名影响对比
+				unset($source[$v]['TABLE_SCHEMA']);
+				unset($self[$v]['TABLE_SCHEMA']);
+				//防止索引影响 COLUMN_KEY
+				unset($source[$v]['COLUMN_KEY']);
+				unset($self[$v]['COLUMN_KEY']);
+				// COLUMN_DEFAULT
+				unset($source[$v]['COLUMN_DEFAULT']);
+				unset($self[$v]['COLUMN_DEFAULT']);
+				if(array_diff($source[$v],$self[$v])){
+					$data[] = $source[$v];
+				}
+			}	
 		}
-		// var_dump($source);
-		// var_dump(array_keys($source));
-		// var_dump($self);
-		var_dump($data);
+		return $data;
+	}
+
+	// 对比联合索引里的字段
+	public function diff_index_attr($source,$self)
+	{
+
+		$key = array_intersect_key($source,$self);
+		$key2 = array_intersect_key($self,$source);
+
+		foreach($key as $k=>$v){
+				if(array_diff($v,$key2[$k]) || array_diff($key2[$k],$v)){
+					$data[$k] = $v;
+				}
+		}
+		return $data;
 	}
 
 	//按照源来处理目标表字段
@@ -143,9 +172,86 @@ class mysqlSync{
 				}
 			}
 		}
+		$this->duSql($datah);
 		return $datah;
 	}
 
+	//处理索引
+	public function disposeIndex()
+	{
+		$datal = array();
+		foreach($this->showTable('sourcepdo') as $v){
+
+			if(!empty($this->getIndex('sourcepdo',$v)) && !empty($this->getIndex('selfpdo',$v))){ //两者都不为空就对比
+				//目标多余的字段要删除的
+				
+				if(!empty(array_diff_key($this->getIndex('selfpdo',$v),$this->getIndex('sourcepdo',$v)))){  //目标有多余删除
+					$sqll = array_diff_key($this->getIndex('selfpdo',$v),$this->getIndex('sourcepdo',$v));
+					foreach($sqll as $ik=>$iv){
+						if($ik == 'PRIMARY'){
+							$datal[] = "ALTER TABLE {$v} DROP PRIMARY KEY";
+						}else{
+							$datal[] = "ALTER TABLE {$v} DROP INDEX {$ik}";
+						}
+					}
+				}
+				if(!empty(array_diff_key($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v)))){  //源有多余就增加
+					$sqll = array_diff_key($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v));
+					foreach($sqll as $ik=>$iv){
+						if($ik == 'PRIMARY'){
+							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`)";
+						}else{
+							$con = '';
+							foreach($iv as $vv){
+								$con .= '`'.$vv.'`,';
+							}
+							$con = rtrim($con,',');
+							$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con})";
+						}
+					}
+				}
+				if(!empty($this->diff_index_attr($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v)))){  //对比索引里面的字段
+					$sqll = $this->diff_index_attr($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v));
+
+					foreach($sqll as $ik=>$iv){
+						if($ik == 'PRIMARY'){
+							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`)";
+						}else{
+							$con = '';
+							foreach($iv as $vv){
+								$con .= '`'.$vv.'`,';
+							}
+							$con = rtrim($con,',');
+							$datal[] = "ALTER TABLE `{$v}` DROP INDEX `{$ik}`, ADD INDEX `{$ik}` ({$con}) USING BTREE;";
+						}
+					}
+				}
+			}elseif(empty($this->getIndex('sourcepdo',$v)) && !empty($this->getIndex('selfpdo',$v))){  //源为null则删除
+				foreach($this->getIndex('selfpdo',$v) as $ik=>$iv){
+					if($ik == 'PRIMARY'){
+						$datal[] = "ALTER TABLE {$v} DROP PRIMARY KEY";
+					}else{
+						$datal[] = "ALTER TABLE {$v} DROP INDEX {$ik}";
+					}
+				}
+			}elseif(empty($this->getIndex('selfpdo',$v)) && !empty($this->getIndex('sourcepdo',$v))){   //目标为空就增加
+				foreach($this->getIndex('sourcepdo',$v) as $ik=>$iv){
+					if($ik == 'PRIMARY'){
+						$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`)";
+					}else{
+						$con = '';
+						foreach($iv as $vv){
+							$con .= '`'.$vv.'`,';
+						}
+						$con = rtrim($con,',');
+						$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con})";
+					}
+				}
+			}
+		}
+		$this->duSql($datal);
+		return $datal;
+	}
 
 	//执行sql语句
 	public function duSql($data)
@@ -159,25 +265,39 @@ class mysqlSync{
 	//运行
 	public function run()
 	{
+		echo '<h2>同步表结构</h2>';
+		echo '<hr>';
+		echo '<h4>同步索引执行的sql语句</h4>';
+		foreach($this->disposeIndex() as $v){
+			echo $v.'<br>';
+		}
+		echo '<hr>';
 		echo '<h4>同步表字段执行的sql语句</h4>';
 		foreach($this->disposeField() as $v){
 			echo $v.'<br>';
 		}
+		echo '<hr>';
 		echo '<h4>目标数据库特有的表:</h4>';
 		foreach($this->getSelfNewTable() as $v){
+			echo $v.'<br>';
+		}
+		echo '<hr>';
+		echo '<h4>需要手动处理的表:</h4>';
+		foreach($this->canNotTable as $v){
 			echo $v.'<br>';
 		}
 		echo '<hr>';
 	}
 }
 
-
+//目标数据库
 $selfConf = array(
 	'host'=>'localhost',
 	'user'=>'root',
 	'pass'=>'',
-	'db'=>'weixin2'
+	'db'=>'text'
 );
+//源数据库
 $sourceConf = array(
 	'host'=>'localhost',
 	'user'=>'root',
@@ -185,19 +305,4 @@ $sourceConf = array(
 	'db'=>'weixin'
 );
 $mysql = new mysqlSync($sourceConf,$selfConf);
-
-// var_dump($mysql->getIndex('selfpdo'));
-
-// var_dump($mysql->getIndex('sourcepdo'));
-// echo '<hr>';
-
-// $mysql->disposeField();
-
-// ALTER TABLE `ims_bj_qmxk_activity_entry` DROP `updatetime`
-// ALTER TABLE `ims_bj_qmxk_channel_list` ADD `channel_type` INT(2) NOT NULL COMMENT '所选择的模式';
-// ALTER TABLE `ims_bj_qmxk_activity_entry` CHANGE `updatetime` `updatetime` INT(10) NULL DEFAULT NULL COMMENT '修改时间';
-// ALTER TABLE `ims_bj_qmxk_channel_module_content` ADD INDEX( `module_id`, `c_order`, `status`);
-// ALTER TABLE ims_bj_qmxk_activity_entry DROP PRIMARY KEY
-// ALTER TABLE ims_bj_qmxk_channel_list DROP INDEX channel_order;
-
 $mysql->run();
