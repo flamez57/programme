@@ -73,9 +73,13 @@ class mysqlSync{
 	//源有目标没有
 	public function diffTable()
 	{
-		//无法处理的表下面打印的是
-		$this->canNotTable = array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo'));
-		return array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo'));
+		if(empty($this->showTable('selfpdo'))){
+			return $this->showTable('sourcepdo');
+		}else{
+			//无法处理的表下面打印的是
+			$this->canNotTable = array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo'));
+			return array_diff($this->showTable('sourcepdo'),$this->showTable('selfpdo'));
+		}
 	}
 
 	//目标数据库特有的表
