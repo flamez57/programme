@@ -6,7 +6,7 @@ class mysqlSync{
 	private $sourcepdo;
 	private $sourceConf; //源配置信息
 	private $selfConf;   //目标配置信息
-	private $canNotTable; //无法处理的表
+	private $canNotTable = array(); //无法处理的表
 
 	public function __construct($sourceConf,$selfConf)
 	{
