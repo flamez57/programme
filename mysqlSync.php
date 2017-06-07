@@ -18,7 +18,7 @@ class mysqlSync{
 	}
 	private function getConnection($conf,$hl)
 	{
-		$dsn="mysql:dbname={$conf['db']};host={$conf['host']}";
+		$dsn="mysql:dbname={$conf['db']};host={$conf['host']};port={$conf['port']}";
 		try{
 		 	$this->$hl =  new PDO($dsn,$conf['user'],$conf['pass'],array(PDO::MYSQL_ATTR_INIT_COMMAND => "set names utf8"));
 		}catch(PDOException $e){
@@ -322,14 +322,16 @@ $selfConf = array(
 	'host'=>'localhost',
 	'user'=>'root',
 	'pass'=>'',
-	'db'=>'text'
+	'db'=>'text',
+	'port'=>'3306'
 );
 //源数据库
 $sourceConf = array(
 	'host'=>'localhost',
 	'user'=>'root',
 	'pass'=>'',
-	'db'=>'weixin'
+	'db'=>'weixin',
+	'port'=>'3306'
 );
 $mysql = new mysqlSync($sourceConf,$selfConf);
 $mysql->run();
