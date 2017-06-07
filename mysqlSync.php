@@ -34,6 +34,7 @@ class mysqlSync{
 		$datai = $stmt->fetchAll(PDO::FETCH_ASSOC); 
 		foreach($datai as $v){
 			$data[$v['Key_name']][$v['Seq_in_index']] = $v['Column_name'];
+			$data[$v['Key_name']]['Index_type'] = $v['Index_type'];
 		}
 		return $data;
 	}
@@ -114,7 +115,11 @@ class mysqlSync{
 				// COLUMN_DEFAULT
 				unset($source[$v]['COLUMN_DEFAULT']);
 				unset($self[$v]['COLUMN_DEFAULT']);
-				if(array_diff($source[$v],$self[$v])){
+				//PRIVILEGES
+				unset($source[$v]['PRIVILEGES']);
+				unset($self[$v]['PRIVILEGES']);
+				
+				if(array_diff($source[$v],$self[$v]) || array_diff($self[$v],$source[$v])){
 					$data[] = $source[$v];
 				}
 			}	
@@ -159,7 +164,7 @@ class mysqlSync{
 					$sqlh = array_values(array_diff_key($this->getField('sourcepdo',$v,$this->sourceConf['db']),$this->getField('selfpdo',$v,$this->selfConf['db'])));
 					foreach($sqlh as $vh){
 						$ifnull = $vh['IS_NULLABLE'] == 'NO' ? 'NOT NULL':'NULL';
-						$datah[] = "ALTER TABLE `{$vh['TABLE_NAME']}` ADD `{$vh['COLUMN_NAME']}` {$vh['COLUMN_TYPE']} {$ifnull} COMMENT '{$vh['COLUMN_COMMENT']}'";
+						$datah[] = "ALTER TABLE `{$vh['TABLE_NAME']}` ADD `{$vh['COLUMN_NAME']}` {$vh['COLUMN_TYPE']} {$ifnull} {$vh['EXTRA']} COMMENT '{$vh['COLUMN_COMMENT']}'";
 					}
 				}
 			}
@@ -171,7 +176,7 @@ class mysqlSync{
 					$sqlh = array_values($this->diff_field_attr($this->getField('sourcepdo',$v,$this->sourceConf['db']),$this->getField('selfpdo',$v,$this->selfConf['db'])));
 					foreach($sqlh as $vh){
 						$ifnull = $vh['IS_NULLABLE'] == 'NO' ? 'NOT NULL':'NULL';
-						$datah[] = "ALTER TABLE `{$vh['TABLE_NAME']}` CHANGE `{$vh['COLUMN_NAME']}` `{$vh['COLUMN_NAME']}` {$vh['COLUMN_TYPE']} {$ifnull} COMMENT '{$vh['COLUMN_COMMENT']}'";
+						$datah[] = "ALTER TABLE `{$vh['TABLE_NAME']}` CHANGE `{$vh['COLUMN_NAME']}` `{$vh['COLUMN_NAME']}` {$vh['COLUMN_TYPE']} {$ifnull} {$vh['EXTRA']} COMMENT '{$vh['COLUMN_COMMENT']}'";
 					}
 				}
 			}
@@ -202,15 +207,21 @@ class mysqlSync{
 				if(!empty(array_diff_key($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v)))){  //源有多余就增加
 					$sqll = array_diff_key($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v));
 					foreach($sqll as $ik=>$iv){
+						if($iv['Index_type'] ){
+							$btree = "USING {$iv['Index_type']}";
+						}else{
+							$btree = "";
+						}
+						unset($iv['Index_type']);
 						if($ik == 'PRIMARY'){
-							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`)";
+							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`) {$btree}";
 						}else{
 							$con = '';
 							foreach($iv as $vv){
 								$con .= '`'.$vv.'`,';
 							}
 							$con = rtrim($con,',');
-							$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con})";
+							$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con}) {$btree}";
 						}
 					}
 				}
@@ -218,15 +229,21 @@ class mysqlSync{
 					$sqll = $this->diff_index_attr($this->getIndex('sourcepdo',$v),$this->getIndex('selfpdo',$v));
 
 					foreach($sqll as $ik=>$iv){
+						if($iv['Index_type'] ){
+							$btree = "USING {$iv['Index_type']}";
+						}else{
+							$btree = "";
+						}
+						unset($iv['Index_type']);
 						if($ik == 'PRIMARY'){
-							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`)";
+							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`) {$btree}";
 						}else{
 							$con = '';
 							foreach($iv as $vv){
 								$con .= '`'.$vv.'`,';
 							}
 							$con = rtrim($con,',');
-							$datal[] = "ALTER TABLE `{$v}` DROP INDEX `{$ik}`, ADD INDEX `{$ik}` ({$con}) USING BTREE;";
+							$datal[] = "ALTER TABLE `{$v}` DROP INDEX `{$ik}`, ADD INDEX `{$ik}` ({$con}) {$btree}";
 						}
 					}
 				}
@@ -240,15 +257,21 @@ class mysqlSync{
 				}
 			}elseif(empty($this->getIndex('selfpdo',$v)) && !empty($this->getIndex('sourcepdo',$v))){   //目标为空就增加
 				foreach($this->getIndex('sourcepdo',$v) as $ik=>$iv){
+					if($iv['Index_type'] ){
+						$btree = "USING {$iv['Index_type']}";
+					}else{
+						$btree = "";
+					}
+					unset($iv['Index_type']);
 					if($ik == 'PRIMARY'){
-						$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`)";
+						$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`) {$btree}";
 					}else{
 						$con = '';
 						foreach($iv as $vv){
 							$con .= '`'.$vv.'`,';
 						}
 						$con = rtrim($con,',');
-						$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con})";
+						$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con}) {$btree}";
 					}
 				}
 			}
