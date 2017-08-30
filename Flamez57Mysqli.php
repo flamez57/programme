@@ -30,28 +30,28 @@ define("CHARSET","UTF8");
 class Flamez57Mysqli
 {
 
-	//数据库连接
-	private $dbLink;  
+    //数据库连接
+    private $dbLink;  
 
-	//要操作的数据表
-	private $tableName;  
+    //要操作的数据表
+    private $tableName;  
 
-	//当前表字段
-	private $fields;  
+    //当前表字段
+    private $fields;  
 
-	private $method = [
-		"where" => "",
-        "order" => "",
-        "limit" => "",
-        "group" => "",
-        "having" => ""
-	];
+    private $method = [
+    "where" => "",
+    "order" => "",
+    "limit" => "",
+    "group" => "",
+    "having" => ""
+    ];
 
-	/*
-	 *	连接数据库
-	 */
-	public function __construct($tableName)
-	{
+    /*
+     *	连接数据库
+     */
+    public function __construct($tableName)
+    {
         $this->tableName = $tableName;
         try{
             $this->dbLink = mysqli_connect(HOSTNAME,USERNAME,PASSWORD,DATANAME,PORT);
