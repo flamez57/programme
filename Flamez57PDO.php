@@ -17,54 +17,54 @@ class Flamez57PDO
 	private $debug = false;
 	private $error = 'nothing error';
     
-  /*
-  ** 链接数据库
-  */
-  public  function __construct($hostname, $username, $password, $dataname, $port, $charset, $debug)
-  {
-    $this->debug = $debug;
-    if (!isset($this->pdo)) {
-      $dsn="mysql:dbname={$dataname};host={$hostname};port={$port}";
-      try{
-        $this->pdo =  new \PDO($dsn,$username,$password,array(\PDO::MYSQL_ATTR_INIT_COMMAND => "set names {$charset}"));
-        $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);    //设置异常处理方式
-        $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);   //设置默认关联索引遍历
-      }catch(\PDOException $e){
-        $this->errorMsg('数据库连接失败'.$e->getMessage());
-      }
-    } 
-  }
+	/*
+	** 链接数据库
+	*/
+	public  function __construct($hostname, $username, $password, $dataname, $port, $charset, $debug)
+	{
+		$this->debug = $debug;
+		if (!isset($this->pdo)) {
+			$dsn="mysql:dbname={$dataname};host={$hostname};port={$port}";
+			try{
+				$this->pdo =  new \PDO($dsn,$username,$password,array(\PDO::MYSQL_ATTR_INIT_COMMAND => "set names {$charset}"));
+				$this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);    //设置异常处理方式
+				$this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);   //设置默认关联索引遍历
+			}catch(\PDOException $e){
+				$this->errorMsg('数据库连接失败'.$e->getMessage());
+			}
+		} 
+	}
 
-  /*
-  ** 返回错误信息
-  */
-  private function errorMsg($msg)
-  {
-    if (is_array($msg)) {
-      echo "<strong>Flamez57Bug:</strong>";
-      var_dump($msg);
-    } else {
-      echo "<strong>Flamez57Bug:</strong>".$msg;
-    }
-  }
+	/*
+	** 返回错误信息
+	*/
+	private function errorMsg($msg)
+	{
+		if (is_array($msg)) {
+			echo "<strong>Flamez57Bug:</strong>";
+			var_dump($msg);
+		} else {
+			echo "<strong>Flamez57Bug:</strong>".$msg;
+		}
+	}
 
     
-  /*
-  **	执行sql 返回受影响行数
-  **	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  **	@param string $sql
-  **	@return string
-  */
-  public function query($sql)
-  {
-    try{
-      $pre = $this->pdo->query($sql);
-    }catch(\PDOException $e){
-      $this->error = $e->getMessage();
-      return 0; 	
-    } 
-    return $pre->rowCount();
-  }
+	/*
+	**	执行sql 返回受影响行数
+	**	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	**	@param string $sql
+	**	@return string
+	*/
+	public function query($sql)
+	{
+	try{
+	$pre = $this->pdo->query($sql);
+	}catch(\PDOException $e){
+	$this->error = $e->getMessage();
+	return 0; 	
+	} 
+	return $pre->rowCount();
+	}
 
     /*
     ** 检测调用的方法是否存在
