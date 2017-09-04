@@ -57,84 +57,8 @@ class Flamez57PDO
 	*/
 	public function query($sql)
 	{
-	try{
-	$pre = $this->pdo->query($sql);
-	}catch(\PDOException $e){
-	$this->error = $e->getMessage();
-	return 0; 	
-	} 
-	return $pre->rowCount();
-	}
-
-    /*
-    ** 检测调用的方法是否存在
-    */
-    public function __call($name, $arguments)
-    {
-        if(method_exists($this->pdo, $name)){
-            return call_user_func_array(array($this->pdo,$name), $arguments);
-        }
-        $this->errorMsg("没有找到方法 $name!");
-    }
-    
-
-    /*
-    **  检测调用的属性是否存在
-    */
-    public function __get($name)
-    {
-        if(property_exists($this->pdo, $name)){
-            return $this->pdo->$name;
-        }
-        $this->errorMsg("没有找到属性 $name!");
-    }
-
-  /*
-  **	插入数据
-  **	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  **	@param string $table
-  **	@param array $data = ['id' => '5'];
-  **	@param bool $isReplace
-  **	@return array
-  */
-	public function insert($table, $data, $isReplace = false)
-	{
-        $sql = ($isReplace?"REPLACE":"INSERT")." INTO {$table} (".join(',', array_keys($data)).") VALUES (:".join(',:', array_keys($data)).")";
-        $pro = $this->pdo->prepare($sql);
-        try{
-		 	$pre->execute($data);
-		}catch(\PDOException $e){
-			$this->error = $e->getMessage();
-			return 0; 	
-		} 
-		return $this->pdo->lastInsertId();
-	}
-
-  /*
-  **	修改 (条件仅限 and = )
-  **	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  **	@param string $table 表名
-  **	@param array $params 待修改数据
-  **	@parma array $wheres  条件
-  **	@return string  1/0
-  */
-	public function update($table, $params, $wheres)
-	{
-		$where = '';
-		$param = '';
-        foreach ($params as $k => $v) {
-            $param .= $k."=:".$k.",";
-        }
-        foreach ($wheres as $k => $v) {
-        	$where .= $k."=:".$k." AND";
-        }
-        $where = rtrim($where, 'AND');
-        $param = rtrim($param, ',');
-        $sql="UPDATE {$table} SET {$param} WHERE {$where}";
-        $data = array_merge($params,$wheres);
-        $pre = $this->pdo->prepare($sql);
-        try{
-		 	$pre->execute($data);
+		try{
+			$pre = $this->pdo->query($sql);
 		}catch(\PDOException $e){
 			$this->error = $e->getMessage();
 			return 0; 	
@@ -142,24 +66,100 @@ class Flamez57PDO
 		return $pre->rowCount();
 	}
 
-    /*
-    **	删除 (条件仅限 and = )
-    **	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    **	@param string $table 表名
-    **	@parma array $wheres  条件
-    **	@return string 1/0
-    */
+	/*
+	** 检测调用的方法是否存在
+	*/
+	public function __call($name, $arguments)
+	{
+		if(method_exists($this->pdo, $name)){
+			return call_user_func_array(array($this->pdo,$name), $arguments);
+		}
+		$this->errorMsg("没有找到方法 $name!");
+	}
+
+
+	/*
+	**  检测调用的属性是否存在
+	*/
+	public function __get($name)
+	{
+		if(property_exists($this->pdo, $name)){
+			return $this->pdo->$name;
+		}
+		$this->errorMsg("没有找到属性 $name!");
+	}
+
+	/*
+	**	插入数据
+	**	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	**	@param string $table
+	**	@param array $data = ['id' => '5'];
+	**	@param bool $isReplace
+	**	@return array
+	*/
+	public function insert($table, $data, $isReplace = false)
+	{
+		$sql = ($isReplace?"REPLACE":"INSERT")." INTO {$table} (".join(',', array_keys($data)).") VALUES (:".join(',:', array_keys($data)).")";
+		$pro = $this->pdo->prepare($sql);
+		try{
+			$pre->execute($data);
+		}catch(\PDOException $e){
+			$this->error = $e->getMessage();
+			return 0; 	
+		} 
+		return $this->pdo->lastInsertId();
+	}
+
+	/*
+	**	修改 (条件仅限 and = )
+	**	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	**	@param string $table 表名
+	**	@param array $params 待修改数据
+	**	@parma array $wheres  条件
+	**	@return string  1/0
+	*/
+	public function update($table, $params, $wheres)
+	{
+		$where = '';
+		$param = '';
+		foreach ($params as $k => $v) {
+			$param .= $k."=:".$k.",";
+		}
+		foreach ($wheres as $k => $v) {
+			$where .= $k."=:".$k." AND";
+		}
+		$where = rtrim($where, 'AND');
+		$param = rtrim($param, ',');
+		$sql="UPDATE {$table} SET {$param} WHERE {$where}";
+		$data = array_merge($params,$wheres);
+		$pre = $this->pdo->prepare($sql);
+		try{
+			$pre->execute($data);
+		}catch(\PDOException $e){
+			$this->error = $e->getMessage();
+			return 0; 	
+		} 
+		return $pre->rowCount();
+	}
+
+	/*
+	**	删除 (条件仅限 and = )
+	**	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	**	@param string $table 表名
+	**	@parma array $wheres  条件
+	**	@return string 1/0
+	*/
 	public function delete($table, $wheres)
 	{
 		$where = '';
-        foreach ($wheres as $k => $v) {
-        	$where .= $k."=:".$k." AND";
-        }
-        $where = rtrim($where, 'AND');
-        $sql="DELETE FROM {$table} WHERE {$where}";
-        $pre = $this->pdo->prepare($sql);
-        try{
-		 	$pre->execute($wheres);
+		foreach ($wheres as $k => $v) {
+			$where .= $k."=:".$k." AND";
+		}
+		$where = rtrim($where, 'AND');
+		$sql="DELETE FROM {$table} WHERE {$where}";
+		$pre = $this->pdo->prepare($sql);
+		try{
+			$pre->execute($wheres);
 		}catch(\PDOException $e){
 			$this->error = $e->getMessage();
 			return 0; 	
@@ -167,60 +167,60 @@ class Flamez57PDO
 		return $pre->rowCount();       
 	}
 
-    /*
-    **	查询全部
-    **	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    **	@param string $sql = "SELECT * FROM user WHERE id>:id";
-    **	@param array $data = ['id' => '5'];
-    **	@return array
-    */
-    public function getAll($sql, $data = array())
-    {
-        $pre = $this->pdo->prepare($sql);
-        try{
-		 	$pre->execute($data);
+	/*
+	**	查询全部
+	**	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	**	@param string $sql = "SELECT * FROM user WHERE id>:id";
+	**	@param array $data = ['id' => '5'];
+	**	@return array
+	*/
+	public function getAll($sql, $data = array())
+	{
+		$pre = $this->pdo->prepare($sql);
+		try{
+			$pre->execute($data);
 		}catch(\PDOException $e){
 			$this->error = $e->getMessage();
 			return 0; 	
 		} 
 		return $pre->fetchAll();
-    }
+	}
 
-    /*
-    **	查询一行
-    **	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    **	@param string $sql = "SELECT * FROM user WHERE id=:id";
-    **	@param array $data = ['id' => '5'];
-    **	return array
-    */
-    public function getRow($sql, $data = array())
-    {
-    	$pre = $this->pdo->prepare($sql);
-    	try{
-		 	$pre->execute($data);
+	/*
+	**	查询一行
+	**	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	**	@param string $sql = "SELECT * FROM user WHERE id=:id";
+	**	@param array $data = ['id' => '5'];
+	**	return array
+	*/
+	public function getRow($sql, $data = array())
+	{
+		$pre = $this->pdo->prepare($sql);
+		try{
+			$pre->execute($data);
 		}catch(\PDOException $e){
 			$this->error = $e->getMessage();
 			return 0; 	
 		} 
 		return $pre->fetch();
-    }
+	}
 
-    /*
-    **  释放数据
-    */
-    public function __destruct()
-    {
-        if(isset($this->pdo)){
-        	if ($this->debug) {
-	        	$this->errorMsg($this->error);
-	        }
-        	$this->pdo = null;
-        }    	        
-    }
+	/*
+	**  释放数据
+	*/
+	public function __destruct()
+	{
+		if(isset($this->pdo)){
+			if ($this->debug) {
+				$this->errorMsg($this->error);
+			}
+			$this->pdo = null;
+		}    	        
+	}
 
-  /*
-  ** 开启事务处理
-  */
+	/*
+	** 开启事务处理
+	*/
 	public function beginTransaction()
 	{
 		return $this->pdo->beginTransaction();
