@@ -100,7 +100,7 @@ class Flamez57PDO
 	public function insert($table, $data, $isReplace = false)
 	{
 		$sql = ($isReplace?"REPLACE":"INSERT")." INTO {$table} (".join(',', array_keys($data)).") VALUES (:".join(',:', array_keys($data)).")";
-		$pro = $this->pdo->prepare($sql);
+		$pre = $this->pdo->prepare($sql);
 		try{
 			$pre->execute($data);
 		}catch(\PDOException $e){
