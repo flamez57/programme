@@ -4,7 +4,7 @@ namespace Flamez57;
 ** Flamez57Upload使用说明：
 ** ===========================================================
 ** 实例化文件上传器
-** $mysql = new \Flamez57\Flamez57Upload(['filepath' => $filepath, '$allowtype' => array('gif', 'jpg', 'png', 'jpeg'), 'maxsize' => '1000000', 'israndname' => true]); 
+** $upload = new \Flamez57\Flamez57Upload(['filepath' => $filepath, '$allowtype' => array('gif', 'jpg', 'png', 'jpeg'), 'maxsize' => '1000000', 'israndname' => true]); 
 ** ===========================================================
 */
 class Flamez57Upload 
@@ -363,7 +363,7 @@ class Flamez57Upload
 	*/
 	public function create_simg($img_w,$img_h, $filesName)
 	{
-		$new_name=."/s_".$filesName;  
+		$new_name="/s_".$filesName;  
 		$imgsize=getimagesize($filesName);
 	 
 		switch ($imgsize[2]) {
