@@ -1,7 +1,7 @@
 <?php
 /*
 ** 连接追踪工具
-** <Flamez57@1050355217>
+** <Flamez57@mysweet95.com>
 */
 class tance
 {
