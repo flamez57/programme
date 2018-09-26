@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文本框显示行号</title>
+    <style>
+        /*文本框显示行号*/
+        #msg1,#msg2,#msg3,#msg4{display:none}
+        #ol{position:absolute;top: 17px;left: 17px;height: 205px;z-index:1;padding:0;margin:0;border:0;background:#ecf0f5;width:23px;text-align:left;resize: none;opacity: 0.5;}
+        #li{background:#ecf0f5;height:199px;overflow:hidden;width:32px;border:none;line-height:20px;margin:0;padding-top:13px;text-align:center;resize: none;}
+        .texts{float: left;width: 566px;height: 200px;line-height: 20px;font: 18px Courier New,​sans-serif;border: 5px solid #f18200;border-radius: 2px;resize: none;padding: 5px 0 0 45px;margin: 12px;overflow: auto;}
+    </style>
+</head>
+<body>
+    <div class="search">
+        <div id="ol">
+            <textarea id="li" cols="2" rows="10" disabled></textarea>
+        </div>
+        <textarea id="c2" name="co" class="texts" cols="40" rows="3" wrap="off" onblur="check('2')" onkeyup="keyUp()" onFocus="clearValue('2')" onscroll="G('li').scrollTop = this.scrollTop;" oncontextmenu="return false" placeholder="Do something"></textarea>
+    </div>
+    <script src="https://flamez57.github.io/carousel/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript">
+        /*文本框显示行号*/
+        String.prototype.trim2 = function()
+        {
+            return this.replace(/(^\s*)|(\s*$)/g, "");
+        }
+        function F(objid){
+            return document.getElementById(objid).value;
+        }
+        function G(objid){
+            return document.getElementById(objid);
+        }
+        /*文本框显示行号*/
+        var msgA=["msg1","msg2","msg3","msg4"];
+        var c=["c1","c2","c3","c4"];
+        var slen=[50,20000,20000,60];//允许最大字数
+        var num="";
+        var isfirst=[0,0,0,0,0,0];
+        function isEmpty(strVal){
+            if( strVal == "" ){
+                return true;
+            }else{
+                return false;
+            }
+        }
+        function isBlank(testVal){
+            var regVal=/^\s*$/;
+            return (regVal.test(testVal))
+        }
+        function chLen(strVal){
+            strVal=strVal.trim2();
+            var cArr = strVal.match(/[^\x00-\xff]/ig);
+            return strVal.length + (cArr == null ? 0 : cArr.length);
+        }
+        function check(i){
+            var iValue=F("c"+i);
+            var iObj=G("msg"+i);
+            var n=(chLen(iValue)>slen[i-1]);
+            if((isBlank(iValue)==true)||(isEmpty(iValue)==true)||n==true){
+                iObj.style.display ="block";
+            }else{
+                iObj.style.display ="none";
+            }
+        }
+        function checkAll(){
+            for(var i=0;i<msgA.length; i++){
+                check(i+1);
+                if(G(msgA[i]).style.display=="none"){
+                    continue;
+                }else{
+                    alert("填写错误,请查看提示信息！");
+                    return;
+                }
+            }
+            G("form1").submit();
+        }
+        function clearValue(i){
+            G(c[i-1]).style.color="#000";
+            keyUp();
+            if(isfirst[i]==0){
+                G(c[i-1]).value="";
+            }
+            isfirst[i]=1;
+        }
+        function keyUp(){
+            var obj=G("c2");
+            var str=obj.value;
+            str=str.replace(/\r/gi,"");
+            str=str.split("\n");
+            n=str.length;
+            line(n);
+        }
+        function line(n){
+            var lineobj=G("li");
+            for(var i=1;i<=n;i++){
+                if(document.all){
+                    num+=i+"\r\n";
+                }else{
+                    num+=i+"\n";
+                }
+            }
+            lineobj.value=num;
+            num="";
+        }
+        function autoScroll(){
+            var nV = 0;
+            if(!document.all){
+                nV=G("c2").scrollTop;
+                G("li").scrollTop=nV;
+                setTimeout("autoScroll()",20);
+            }
+        }
+        if(!document.all){
+            window.addEventListener("load",autoScroll,false);
+        }
+    </script>
+</body>
+</html>
