@@ -120,6 +120,20 @@ class mysqlSync{
 				unset($source[$v]['PRIVILEGES']);
 				unset($self[$v]['PRIVILEGES']);
 				
+				unset($source[$v]['CHARACTER_OCTET_LENGTH']);
+                                unset($self[$v]['CHARACTER_OCTET_LENGTH']);
+
+                                unset($source[$v]['CHARACTER_SET_NAME']);
+                                unset($self[$v]['CHARACTER_SET_NAME']);
+
+
+                                unset($source[$v]['COLLATION_NAME']);
+                                unset($self[$v]['COLLATION_NAME']);
+
+                                unset($source[$v]['ORDINAL_POSITION']);
+                                unset($self[$v]['ORDINAL_POSITION']);
+
+				
 				if(array_diff($source[$v],$self[$v]) || array_diff($self[$v],$source[$v])){
 					$data[] = $source[$v];
 				}
