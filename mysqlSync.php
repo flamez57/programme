@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * 同步两个库的表的表结构
+ * User: flamez57
+ * Date: 2019/7/9
+ * Time: 11:09
+ */
 class mysqlSync{
 
 	private $selfpdo;
