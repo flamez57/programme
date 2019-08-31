@@ -16,11 +16,11 @@ class mysqlSync{
 		$this->getConnection($sourceConf,'sourcepdo');
 		$this->CreateTableToSelf();
 	}
-	private function getConnection($conf,$hl)
+	private function getConnection($conf,$hl,$charset = 'utf8')
 	{
-		$dsn="mysql:dbname={$conf['db']};host={$conf['host']};port={$conf['port']}";
+		$dsn="mysql:dbname={$conf['db']};host={$conf['host']};port={$conf['port']};charset={$charset}";
 		try{
-		 	$this->$hl =  new PDO($dsn,$conf['user'],$conf['pass'],array(PDO::MYSQL_ATTR_INIT_COMMAND => "set names utf8"));
+		 	$this->$hl =  new PDO($dsn,$conf['user'],$conf['pass'],[PDO::ATTR_PERSISTENT=>true]);
 		}catch(PDOException $e){
 		   	echo $hl.'数据库连接失败'.$e->getMessage();
 		}
@@ -35,6 +35,7 @@ class mysqlSync{
 		foreach($datai as $v){
 			$data[$v['Key_name']][$v['Seq_in_index']] = $v['Column_name'];
 			$data[$v['Key_name']]['Index_type'] = $v['Index_type'];
+			$data[$v['Key_name']]['Non_unique'] = $v['Non_unique'];
 		}
 		return $data;
 	}
@@ -216,12 +217,18 @@ class mysqlSync{
 						if($ik == 'PRIMARY'){
 							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`) {$btree}";
 						}else{
+							if ($iv['Non_unique'] == 0) {
+                                                                $unique = 'UNIQUE';
+                                                        } else {
+                                                                $unique = '';
+                                                        }
+
 							$con = '';
 							foreach($iv as $vv){
 								$con .= '`'.$vv.'`,';
 							}
 							$con = rtrim($con,',');
-							$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con}) {$btree}";
+							$datal[] = "ALTER TABLE `{$v}` ADD {$unique} INDEX {$ik} ( {$con}) {$btree}";
 						}
 					}
 				}
@@ -238,12 +245,18 @@ class mysqlSync{
 						if($ik == 'PRIMARY'){
 							$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`) {$btree}";
 						}else{
+							if ($iv['Non_unique'] == 0) {
+                                                                $unique = 'UNIQUE';
+                                                        } else {
+                                                                $unique = '';
+                                                        }
+
 							$con = '';
 							foreach($iv as $vv){
 								$con .= '`'.$vv.'`,';
 							}
 							$con = rtrim($con,',');
-							$datal[] = "ALTER TABLE `{$v}` DROP INDEX `{$ik}`, ADD INDEX `{$ik}` ({$con}) {$btree}";
+							$datal[] = "ALTER TABLE `{$v}` DROP INDEX `{$ik}`, ADD {$unique} INDEX `{$ik}` ({$con}) {$btree}";
 						}
 					}
 				}
@@ -266,12 +279,18 @@ class mysqlSync{
 					if($ik == 'PRIMARY'){
 						$datal[] = "ALTER TABLE `{$v}` ADD PRIMARY KEY(`{$iv[1]}`) {$btree}";
 					}else{
+						if ($iv['Non_unique'] == 0) {
+                                                                $unique = 'UNIQUE';
+                                                        } else {
+                                                                $unique = '';
+                                                        }
+
 						$con = '';
 						foreach($iv as $vv){
 							$con .= '`'.$vv.'`,';
 						}
 						$con = rtrim($con,',');
-						$datal[] = "ALTER TABLE `{$v}` ADD INDEX {$ik} ( {$con}) {$btree}";
+						$datal[] = "ALTER TABLE `{$v}` ADD {$unique} INDEX {$ik} ( {$con}) {$btree}";
 					}
 				}
 			}
