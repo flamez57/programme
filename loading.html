@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>加载动画</title>
+</head>
+<body onload="loding()">
+    <div id="div1">
+        <h1>加载动画</h1>
+        <img src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1602933621037&di=17af769f076451ac3bc3446cfa434d6d&imgtype=0&src=http%3A%2F%2Fhbimg.b0.upaiyun.com%2F4f1b730df97436c1bf843f59a416411d9fed7b7b9ba90-98pV5p_fw658" style="width:100%;"/>
+    </div>
+    <div id="div2" style="display:none;">
+        <h1>复杂的页面</h1>
+        <div>
+            <iframe style="border:2px red dashed" src="http://www.thinkpage.cn/weather/weather.aspx?c=CHXX0008&l=zh-CN&p=MSN&a=1&u=C&s=1&m=0&x=1&d=3&fc=&bgc=&bc=" frameborder="0" scrolling="no" width="200" height="260" allowtransparency="true"></iframe>
+        </div>
+        <div>
+            <iframe src="http://mysweet95.com/" frameborder="0" width="100%" height="800"></iframe>
+        </div>
+    </div>
+<script type="text/javascript">
+function loding(){
+    var input = document.getElementById("div1");
+    input.style.display="none";
+    var input1 = document.getElementById("div2");
+    input1.style.display="inline";
+}
+</script>
+</body>
+</html>
